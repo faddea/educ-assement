@@ -62,7 +62,7 @@
 
   </main>
 
- <script>
+<script>
   // 🔑 Configuración Supabase
   const SUPABASE_URL = "https://isxvmzvealioazfqmwjc.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzeHZtenZlYWxpb2F6ZnFtd2pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczODYzMDEsImV4cCI6MjA3Mjk2MjMwMX0.0HrbZt7dQBTuM2ce4d4onUp-V_FKoEXyJxKD9Fcbnk4";
@@ -119,11 +119,8 @@
       return;
     }
 
-    // Recopilar respuestas
-    const respuestas = {};
-    document.querySelectorAll("input[type='radio']:checked").forEach(radio => {
-      respuestas[radio.name] = radio.value;
-    });
+    // Aquí se eliminó la recopilación de respuestas y puntaje_docente
+    // porque no se usan en el formulario actual.
 
     try {
       const { data, error } = await supabaseClient
@@ -131,8 +128,7 @@
         .insert([{
           materia: materia,
           tema: tema,
-          puntaje_docente: null, // puedes ajustar si quieres capturar
-          respuestas: respuestas
+          docente: docente // 🎉 Agregado para guardar el docente
         }]);
 
       if (error) throw error;
