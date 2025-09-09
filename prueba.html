@@ -62,8 +62,8 @@
 
   </main>
 
-  <script>
-  // 🔑 Configuración Supabase (REEMPLAZA por tu URL y KEY)
+ <script>
+  // 🔑 Configuración Supabase
   const SUPABASE_URL = "https://isxvmzvealioazfqmwjc.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzeHZtenZlYWxpb2F6ZnFtd2pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczODYzMDEsImV4cCI6MjA3Mjk2MjMwMX0.0HrbZt7dQBTuM2ce4d4onUp-V_FKoEXyJxKD9Fcbnk4";
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -108,34 +108,41 @@
     });
   }
 
-  // Finalizar formulario → Guardar en localStorage y Supabase
+  // Finalizar formulario → Guardar en Supabase
   async function finishForm() {
     const materia = document.getElementById('materias').value;
     const docente = document.getElementById('docente').value;
-    const temas = document.getElementById('temas').value.trim();
+    const tema = document.getElementById('temas').value.trim();
 
-    if (!temas) {
+    if (!tema) {
       alert("Por favor, ingresa los temas curriculares para finalizar.");
       return;
     }
 
-    // Guardar en localStorage
-    localStorage.setItem('materiaSeleccionada', materia);
-    localStorage.setItem('docenteAsignado', docente);
-    localStorage.setItem('temasCurriculares', temas);
+    // Recopilar respuestas
+    const respuestas = {};
+    document.querySelectorAll("input[type='radio']:checked").forEach(radio => {
+      respuestas[radio.name] = radio.value;
+    });
 
-    // Guardar en Supabase
-    const { data, error } = await supabaseClient.from("encuesta").insert([
-      { materia: materia, docente: docente, temas: temas, fecha: new Date().toISOString() }
-    ]);
+    try {
+      const { data, error } = await supabaseClient
+        .from("encuesta")
+        .insert([{
+          materia: materia,
+          tema: tema,
+          puntaje_docente: null, // puedes ajustar si quieres capturar
+          respuestas: respuestas
+        }]);
 
-    if (error) {
-      console.error(error);
-      alert("❌ Error al guardar en Supabase");
-    } else {
+      if (error) throw error;
       console.log("✅ Datos guardados en Supabase:", data);
       alert("Encuesta finalizada ✅");
       window.location.href = "materia.html";
+
+    } catch (err) {
+      console.error(err);
+      alert("❌ Error al guardar en Supabase");
     }
   }
 
@@ -144,7 +151,8 @@
     document.getElementById('materias').addEventListener('change', actualizarDocente);
     gsap.from("#form-container", { opacity: 0, y: 50, duration: 1, ease: "power3.out" });
   });
-  </script>
+</script>
+
 
 </body>
 </html>
