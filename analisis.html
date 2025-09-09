@@ -52,66 +52,92 @@
   </main>
 
   <script>
-    // Recuperar datos
+  // 🔹 Configura tu conexión con Supabase
+  const SUPABASE_URL = "https://isxvmzvealioazfqmwjc.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzeHZtenZlYWxpb2F6ZnFtd2pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczODYzMDEsImV4cCI6MjA3Mjk2MjMwMX0.0HrbZt7dQBTuM2ce4d4onUp-V_FKoEXyJxKD9Fcbnk4";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  document.addEventListener("DOMContentLoaded", async () => {
     const materia = localStorage.getItem("materiaSeleccionada") || "Sin materia";
-    // Corregido: Usar la clave 'temasCurriculares' para obtener el dato
-    const temas = localStorage.getItem("temasCurriculares") || "Sin tema"; 
-    const fecha = new Date().toLocaleDateString("es-AR");
-    const respuestas = JSON.parse(localStorage.getItem("respuestas")) || [];
-    const preguntas = JSON.parse(localStorage.getItem("preguntas")) || [];
-    const puntajeDocente = localStorage.getItem("evaluacionDocente") || "Sin calificar";
 
-    // Mostrar datos
-    document.getElementById("materia").innerText = materia;
-    document.getElementById("fecha").innerText = "Fecha: " + fecha;
-    document.getElementById("total").innerText = respuestas.length;
-    document.getElementById("puntajeDocente").innerText = puntajeDocente;
+    // 🔹 Obtener evaluaciones de esa materia
+    const { data, error } = await supabase
+      .from("encuesta")
+      .select("*")
+      .eq("materia", materia)
+      .order("fecha", { ascending: false });
 
-    // Mostrar tema en formato "chip"
+    if (error) {
+      console.error("Error cargando datos:", error.message);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      alert("No hay evaluaciones guardadas para esta materia.");
+      return;
+    }
+
+    // 🔹 Tomamos la última evaluación
+    const ultima = data[0];
+
+    document.getElementById("materia").innerText = ultima.materia || materia;
+    document.getElementById("fecha").innerText = "Fecha: " + new Date(ultima.fecha).toLocaleDateString("es-AR");
+    document.getElementById("puntajeDocente").innerText = ultima.puntaje_docente || "-";
+    document.getElementById("total").innerText = ultima.respuestas ? Object.keys(ultima.respuestas).length : 0;
+
+    // 🔹 Tema (string único en tu tabla)
     const temaCard = document.getElementById("temaCard");
-    // Dividir el string por comas y mostrar cada uno como un chip
-    temas.split(",").forEach(t => { 
-      const chip = document.createElement("span");
-      chip.className = "bg-blue-600/70 text-white px-4 py-2 rounded-xl text-sm font-medium shadow";
-      chip.innerText = t.trim();
-      temaCard.appendChild(chip);
+    const chip = document.createElement("span");
+    chip.className = "bg-blue-600/70 text-white px-4 py-2 rounded-xl text-sm font-medium shadow";
+    chip.innerText = ultima.tema;
+    temaCard.appendChild(chip);
+
+    // 🔹 Procesar respuestas (jsonb → objeto tipo { "Pregunta1": "Sí", "Pregunta2": "No", ... })
+    const respuestasObj = ultima.respuestas || {};
+    const preguntas = Object.keys(respuestasObj);
+    const respuestas = Object.values(respuestasObj);
+
+    // Conteo global
+    const conteo = { "Sí": 0, "No": 0, "Más o menos": 0 };
+    respuestas.forEach(r => {
+      if (conteo[r] !== undefined) conteo[r]++;
     });
 
-    // Contar respuestas por tipo
-    const conteo = { "Si": 0, "No": 0, "Más o menos": 0 };
-    respuestas.forEach(r => conteo[r] = (conteo[r] || 0) + 1);
-
-    // Gráfico de barras
+    // 🔹 Gráfico de barras
     const ctxBar = document.getElementById("barChart").getContext("2d");
     new Chart(ctxBar, {
       type: "bar",
       data: {
         labels: preguntas,
-        datasets: [{
-          label: "Sí",
-          data: preguntas.map((_, i) => respuestas[i] === "Si" ? 1 : 0),
-          backgroundColor: "#3b82f6"
-        },{
-          label: "No",
-          data: preguntas.map((_, i) => respuestas[i] === "No" ? 1 : 0),
-          backgroundColor: "#ef4444"
-        },{
-          label: "Más o menos",
-          data: preguntas.map((_, i) => respuestas[i] === "Más o menos" ? 1 : 0),
-          backgroundColor: "#eab308"
-        }]
+        datasets: [
+          {
+            label: "Sí",
+            data: preguntas.map((p, i) => respuestas[i] === "Sí" ? 1 : 0),
+            backgroundColor: "#3b82f6"
+          },
+          {
+            label: "No",
+            data: preguntas.map((p, i) => respuestas[i] === "No" ? 1 : 0),
+            backgroundColor: "#ef4444"
+          },
+          {
+            label: "Más o menos",
+            data: preguntas.map((p, i) => respuestas[i] === "Más o menos" ? 1 : 0),
+            backgroundColor: "#eab308"
+          }
+        ]
       },
-      options: { 
-        responsive: true, 
-        plugins: { legend: { labels: { color: "#fff" } } }, 
-        scales: { 
-          x: { ticks: { color: "#fff" } }, 
-          y: { ticks: { color: "#fff", precision:0 } } 
-        } 
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: "#fff" } } },
+        scales: {
+          x: { ticks: { color: "#fff" } },
+          y: { ticks: { color: "#fff", precision: 0 } }
+        }
       }
     });
 
-    // Gráfico circular
+    // 🔹 Gráfico circular
     const ctxPie = document.getElementById("pieChart").getContext("2d");
     new Chart(ctxPie, {
       type: "pie",
@@ -119,15 +145,20 @@
         labels: Object.keys(conteo),
         datasets: [{
           data: Object.values(conteo),
-          backgroundColor: ["#3b82f6","#ef4444","#eab308"]
+          backgroundColor: ["#3b82f6", "#ef4444", "#eab308"]
         }]
       },
-      options: { responsive: true, plugins: { legend: { labels: { color: "#fff" } } } }
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: "#fff" } } }
+      }
     });
+  });
 
-    // Volver y salir
-    function volver() { window.location.href = "prueba.html"; }
-    function salir() { window.location.href = "index.html"; }
-  </script>
+  // 🔹 Navegación
+  function volver() { window.location.href = "prueba.html"; }
+  function salir() { window.location.href = "index.html"; }
+</script>
+
 </body>
 </html>

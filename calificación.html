@@ -7,6 +7,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- íconos opcionales -->
   <script src="https://unpkg.com/lucide/dist/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 </head>
 <body class="bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 text-white min-h-screen flex items-center justify-center px-4 font-sans">
 
@@ -63,91 +65,76 @@
   </main>
 
   <script>
-    // Inicialización al cargar DOM
-    document.addEventListener('DOMContentLoaded', () => {
-      // Cargar materia desde localStorage (si existe)
-      const materia = localStorage.getItem("materiaSeleccionada") || "Sin materia";
-      document.getElementById("materia").innerText = materia;
+  // 🔹 Configura tu conexión con Supabase
+  const SUPABASE_URL = "https://isxvmzvealioazfqmwjc.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzeHZtenZlYWxpb2F6ZnFtd2pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczODYzMDEsImV4cCI6MjA3Mjk2MjMwMX0.0HrbZt7dQBTuM2ce4d4onUp-V_FKoEXyJxKD9Fcbnk4";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-      let puntajeSeleccionado = null;
+  document.addEventListener('DOMContentLoaded', () => {
+    const materia = localStorage.getItem("materiaSeleccionada") || "Sin materia";
+    document.getElementById("materia").innerText = materia;
 
-      const scoreButtons = document.querySelectorAll('.score-btn');
-      scoreButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-          seleccionarPuntaje(btn);
-        });
+    let puntajeSeleccionado = null;
 
-        // Permitir selección por teclado (Enter / Space)
-        btn.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            seleccionarPuntaje(btn);
-          }
-        });
+    const scoreButtons = document.querySelectorAll('.score-btn');
+    scoreButtons.forEach(btn => {
+      btn.addEventListener('click', () => seleccionarPuntaje(btn));
+    });
+
+    function seleccionarPuntaje(btn) {
+      scoreButtons.forEach(b => {
+        b.classList.remove('bg-blue-500', 'text-white', 'scale-105', 'border-blue-400');
+        b.setAttribute('aria-pressed', 'false');
       });
+      btn.classList.add('bg-blue-500', 'text-white', 'scale-105', 'border-blue-400');
+      btn.setAttribute('aria-pressed', 'true');
+      puntajeSeleccionado = Number(btn.dataset.value);
+    }
 
-      function seleccionarPuntaje(btn) {
-        // marcar/desmarcar visualmente
-        scoreButtons.forEach(b => {
-          b.classList.remove('bg-blue-500', 'text-white', 'scale-105', 'border-blue-400');
-          b.setAttribute('aria-pressed', 'false');
-        });
-        btn.classList.add('bg-blue-500', 'text-white', 'scale-105', 'border-blue-400');
-        btn.setAttribute('aria-pressed', 'true');
-
-        puntajeSeleccionado = Number(btn.dataset.value);
+    document.getElementById('btnEnviar').addEventListener('click', async () => {
+      if (!puntajeSeleccionado) {
+        alert('Por favor, selecciona un puntaje del 1 al 10.');
+        return;
       }
 
-      // Enviar
-      document.getElementById('btnEnviar').addEventListener('click', () => {
-        if (puntajeSeleccionado === null) {
-            alert('Por favor, selecciona un puntaje del 1 al 10.');
-            return;
-        }
+      // 🔹 Insertar en la tabla encuesta con timestamp
+      const { data, error } = await supabase
+        .from('encuesta')
+        .insert([{
+          materia: materia,
+          puntaje: puntajeSeleccionado,
+          fecha: new Date().toISOString() // fecha y hora actual
+        }]);
 
-        // CORRECCIÓN CLAVE: Usamos la misma clave fija que se usa en analisis.html para guardar el puntaje.
-        localStorage.setItem('evaluacionDocente', puntajeSeleccionado);
-        
-        alert('Puntaje enviado: ' + puntajeSeleccionado);
+      if (error) {
+        console.error("Error al guardar en Supabase:", error.message);
+        alert("Hubo un error al guardar. Revisa la consola.");
+        return;
+      }
 
-        // Guardar con clave que incluya la materia para no pisar otras evaluaciones
-        const materiaKey = 'evaluacionDocente_' + (localStorage.getItem('materiaSeleccionada') || 'sin_materia');
-        localStorage.setItem(materiaKey, puntajeSeleccionado);
-        alert('Puntaje enviado: ' + puntajeSeleccionado);
+      alert('Puntaje enviado correctamente ✅');
 
-        // Ocultamos botón Enviar y mostramos los demás reemplazando "hidden" por "flex"
-        const enviar = document.getElementById('btnEnviar');
-        enviar.classList.add('opacity-0', 'cursor-default');
-        enviar.setAttribute('disabled', 'true');
-
-        ['btnAnalisis', 'btnVolver', 'btnSalir'].forEach(id => {
-          const el = document.getElementById(id);
-          // reemplazamos hidden por flex para evitar estar con hidden+flex simultáneo
-          if (el.classList.contains('hidden')) {
-            el.classList.replace('hidden', 'flex');
-          } else {
-            el.classList.add('flex');
-          }
-          // Aseguramos que tenga las clases de alineación como flex container
-          el.classList.add('items-center', 'justify-center', 'gap-2');
-        });
-      });
-
-      // Funciones de navegación
-      document.getElementById('btnAnalisis').addEventListener('click', () => {
-        window.location.href = 'analisis.html';
-      });
-      document.getElementById('btnVolver').addEventListener('click', () => {
-        window.location.href = 'menu.html';
-      });
-      document.getElementById('btnSalir').addEventListener('click', () => {
-        alert('Gracias por participar. Puedes cerrar la pestaña.');
-        window.location.href = 'index.html';
+      // Ocultar Enviar y mostrar los otros
+      document.getElementById('btnEnviar').classList.add('hidden');
+      ['btnAnalisis', 'btnVolver', 'btnSalir'].forEach(id => {
+        document.getElementById(id).classList.remove('hidden');
       });
     });
 
-    // Intentar inicializar íconos si lucide está cargado (opcional)
-    try { if (window.lucide) lucide.createIcons(); } catch (e) { /* noop */ }
-  </script>
+    document.getElementById('btnAnalisis').addEventListener('click', () => {
+      window.location.href = 'analisis.html';
+    });
+    document.getElementById('btnVolver').addEventListener('click', () => {
+      window.location.href = 'menu.html';
+    });
+    document.getElementById('btnSalir').addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+  });
+
+  // Inicializar íconos (opcional)
+  try { if (window.lucide) lucide.createIcons(); } catch (e) {}
+</script>
+
 </body>
 </html>

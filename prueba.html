@@ -24,38 +24,36 @@
       <h1 class="text-3xl font-bold text-center">Seleccionar Materia</h1>
       <div>
         <label for="materias" class="block mb-2 text-lg">Materia:</label>
-        <select id="materias" class="w-full p-3 rounded-xl bg-zinc-700/70 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" required>
+        <select id="materias" class="w-full p-3 rounded-xl bg-zinc-700/70 text-white transition" required>
           <option value="">-- Elige una materia --</option>
-        <option value="Matemáticas aplicadas">Matemáticas aplicadas</option>
-        <option value="Lengua y Literatura">Lengua y Literatura</option>
-        <option value="Hardware IV">Hardware IV</option>
-        <option value="Software IV">Software IV</option>
-        <option value="Proyecto Tecnológico">Proyecto Tecnológico</option>
-        <option value="Redes">Redes</option>
-        <option value="Practicas profesionalizantes">Practicas profesionalizantes</option>
-        <option value="Programación II">Programación II</option>
-        <option value="Organización y gestión">Organización y gestión</option>
-        <option value="Formación ética">Formación ética</option>
+          <option value="Matemáticas aplicadas">Matemáticas aplicadas</option>
+          <option value="Lengua y Literatura">Lengua y Literatura</option>
+          <option value="Hardware IV">Hardware IV</option>
+          <option value="Software IV">Software IV</option>
+          <option value="Proyecto Tecnológico">Proyecto Tecnológico</option>
+          <option value="Redes">Redes</option>
+          <option value="Practicas profesionalizantes">Practicas profesionalizantes</option>
+          <option value="Programación II">Programación II</option>
+          <option value="Organización y gestión">Organización y gestión</option>
+          <option value="Formación ética">Formación ética</option>
         </select>
       </div>
       <h1 class="text-3xl font-bold text-center">Docente Asignado</h1>
       <div>
         <label for="docente" class="block mb-2 text-lg">Docente:</label>
-        <input type="text" id="docente" class="w-full p-3 rounded-xl bg-zinc-700/70 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" readonly />
+        <input type="text" id="docente" class="w-full p-3 rounded-xl bg-zinc-700/70 text-white transition" readonly />
       </div>
       <button onclick="nextStep(1)" class="w-full bg-blue-600 hover:bg-blue-500 p-3 rounded-xl text-white font-semibold shadow-lg transition transform hover:scale-105">
         Siguiente
       </button>
     </section>
 
-   
-
-    <!-- Paso 3 -->
+    <!-- Paso 2 -->
     <section class="form-step space-y-6 hidden" id="step2">
       <h1 class="text-3xl font-bold text-center">Temas Curriculares</h1>
       <div>
         <label for="temas" class="block mb-2 text-lg">Temas:</label>
-        <textarea id="temas" class="w-full p-3 rounded-xl bg-zinc-700/70 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" rows="4" placeholder="Escribe los temas..." required></textarea>
+        <textarea id="temas" class="w-full p-3 rounded-xl bg-zinc-700/70 text-white transition" rows="4" placeholder="Escribe los temas..." required></textarea>
       </div>
       <button onclick="finishForm()" class="w-full bg-green-600 hover:bg-green-500 p-3 rounded-xl text-white font-semibold shadow-lg transition transform hover:scale-105">
         Finalizar
@@ -65,99 +63,88 @@
   </main>
 
   <script>
-  // Objeto con la lista de materias y sus docentes
-  const docentes = {
-    "Matemáticas aplicadas": "Prof. Marcos Virgilio",
-    "Lengua y Literatura": "Prof. Walter Olivera",
-    "Hardware IV": "Prof. Fabían Stangafero",
-    "Software IV": "Prof. Ana Torres",
-    "Proyecto Tecnológico": "Prof. David Molina",
-    "Redes": "Prof. Fabían Stangafero",
-    "Practicas profesionalizantes": "Prof. Diego Gautero",
-    "Programación II": "Prof. Javier Fleitas",
-    "Organización y gestión": "Prof. Javier Fleitas",
-    "Formación ética": "Prof. Mariana Martinez",
-  };
+  // 🔑 Configuración Supabase (REEMPLAZA por tu URL y KEY)
+  const SUPABASE_URL = "https://isxvmzvealioazfqmwjc.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzeHZtenZlYWxpb2F6ZnFtd2pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczODYzMDEsImV4cCI6MjA3Mjk2MjMwMX0.0HrbZt7dQBTuM2ce4d4onUp-V_FKoEXyJxKD9Fcbnk4";
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  /**
-   * Esta función actualiza el campo del docente basándose en la materia seleccionada.
-   */
-  function actualizarDocente() {
-    const materia = document.getElementById('materias').value;
-    const docente = docentes[materia] || '';
-    document.getElementById('docente').value = docente;
-  }
+  // Docentes por materia
+  const docentes = {
+    "Matemáticas aplicadas": "Prof. Marcos Virgilio",
+    "Lengua y Literatura": "Prof. Walter Olivera",
+    "Hardware IV": "Prof. Fabían Stangafero",
+    "Software IV": "Prof. Ana Torres",
+    "Proyecto Tecnológico": "Prof. David Molina",
+    "Redes": "Prof. Fabían Stangafero",
+    "Practicas profesionalizantes": "Prof. Diego Gautero",
+    "Programación II": "Prof. Javier Fleitas",
+    "Organización y gestión": "Prof. Javier Fleitas",
+    "Formación ética": "Prof. Mariana Martinez",
+  };
 
-  /**
-   * Gestiona la transición al siguiente paso del formulario.
-   */
-  function nextStep(currentStep) {
-    const materia = document.getElementById('materias').value;
+  // Actualizar docente según materia
+  function actualizarDocente() {
+    const materia = document.getElementById('materias').value;
+    document.getElementById('docente').value = docentes[materia] || '';
+  }
 
-    if (currentStep === 1 && !materia) {
-      alert("Por favor, selecciona una materia para continuar.");
-      return;
-    }
+  // Cambiar de paso
+  function nextStep(currentStep) {
+    const materia = document.getElementById('materias').value;
+    if (currentStep === 1 && !materia) {
+      alert("Por favor, selecciona una materia para continuar.");
+      return;
+    }
+    const current = document.getElementById(`step${currentStep}`);
+    const next = document.getElementById(`step${currentStep + 1}`);
 
-    const current = document.getElementById(`step${currentStep}`);
-    const next = document.getElementById(`step${currentStep + 1}`);
+    gsap.to(current, {
+      x: -100, opacity: 0, duration: 0.6, ease: "power2.inOut",
+      onComplete: () => {
+        current.classList.add("hidden");
+        next.classList.remove("hidden");
+        gsap.from(next, { x: 100, opacity: 0, duration: 0.6, ease: "power2.inOut" });
+      }
+    });
+  }
 
-    gsap.to(current, {
-      x: -100,
-      opacity: 0,
-      duration: 0.6,
-      ease: "power2.inOut",
-      onComplete: () => {
-        current.classList.add("hidden");
-        next.classList.remove("hidden");
-        gsap.from(next, {
-          x: 100,
-          opacity: 0,
-          duration: 0.6,
-          ease: "power2.inOut"
-        });
-      }
-    });
-  }
+  // Finalizar formulario → Guardar en localStorage y Supabase
+  async function finishForm() {
+    const materia = document.getElementById('materias').value;
+    const docente = document.getElementById('docente').value;
+    const temas = document.getElementById('temas').value.trim();
 
-  /**
-   * Finaliza el formulario, valida los datos y los guarda.
-   */
-  function finishForm() {
-    const materia = document.getElementById('materias').value;
-    const docente = document.getElementById('docente').value;
-    const temas = document.getElementById('temas').value.trim();
+    if (!temas) {
+      alert("Por favor, ingresa los temas curriculares para finalizar.");
+      return;
+    }
 
-    if (!temas) {
-      alert("Por favor, ingresa los temas curriculares para finalizar.");
-      return;
-    }
+    // Guardar en localStorage
+    localStorage.setItem('materiaSeleccionada', materia);
+    localStorage.setItem('docenteAsignado', docente);
+    localStorage.setItem('temasCurriculares', temas);
 
-    // Guarda los datos en el almacenamiento local
-    localStorage.setItem('materiaSeleccionada', materia);
-    localStorage.setItem('docenteAsignado', docente);
-    localStorage.setItem('temasCurriculares', temas);
+    // Guardar en Supabase
+    const { data, error } = await supabaseClient.from("encuesta").insert([
+      { materia: materia, docente: docente, temas: temas, fecha: new Date().toISOString() }
+    ]);
 
-    alert("Encuesta finalizada ✅");
-    window.location.href = "materia.html";
-  }
+    if (error) {
+      console.error(error);
+      alert("❌ Error al guardar en Supabase");
+    } else {
+      console.log("✅ Datos guardados en Supabase:", data);
+      alert("Encuesta finalizada ✅");
+      window.location.href = "materia.html";
+    }
+  }
 
-  // Animación inicial al cargar la página
-  document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById('materias').addEventListener('change', actualizarDocente);
-    
-    gsap.from("#form-container", {
-      opacity: 0,
-      y: 50,
-      duration: 1,
-      ease: "power3.out"
-    });
-    
-    document.getElementById('step1').classList.remove('hidden');
-    document.getElementById('step2').classList.add('hidden');
-  });
-</script>
-
+  // Animación inicial
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById('materias').addEventListener('change', actualizarDocente);
+    gsap.from("#form-container", { opacity: 0, y: 50, duration: 1, ease: "power3.out" });
+  });
+  </script>
 
 </body>
 </html>

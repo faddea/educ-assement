@@ -6,6 +6,7 @@
   <title>Encuesta</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gradient-to-br from-zinc-900 to-zinc-950 text-white min-h-screen flex flex-col font-sans">
 
@@ -51,7 +52,14 @@
   </main>
 
   <script>
+    // 🔹 Configuración de Supabase
+    const SUPABASE_URL = "https://isxvmzvealioazfqmwjc.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzeHZtenZlYWxpb2F6ZnFtd2pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczODYzMDEsImV4cCI6MjA3Mjk2MjMwMX0.0HrbZt7dQBTuM2ce4d4onUp-V_FKoEXyJxKD9Fcbnk4";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     const materia = localStorage.getItem("materiaSeleccionada") || "Sin materia";
+    const docente = localStorage.getItem("docenteAsignado") || "Sin docente";
+    const temas = localStorage.getItem("temasCurriculares") || "No especificado";
     const fechaActual = new Date().toLocaleDateString('es-AR');
 
     document.getElementById("materia").innerText = materia;
@@ -70,10 +78,9 @@
 
     function mostrarPregunta() {
       document.getElementById("pregunta").innerText = preguntas[indice];
-
-      // Render opciones como botones
       const contenedor = document.getElementById("opciones");
       contenedor.innerHTML = "";
+
       opciones.forEach(op => {
         const btn = document.createElement("button");
         btn.innerText = op;
@@ -81,12 +88,10 @@
         btn.onclick = () => {
           document.querySelectorAll("#opciones button").forEach(b => b.classList.remove("ring-2", "ring-blue-400"));
           btn.classList.add("ring-2", "ring-blue-400");
-          btn.dataset.selected = "true";
         };
         contenedor.appendChild(btn);
       });
 
-      // Progreso
       const progress = ((indice) / preguntas.length) * 100;
       document.getElementById("progressBar").style.width = progress + "%";
 
@@ -113,10 +118,35 @@
       }
     }
 
-    function verAnalisis() {
-      localStorage.setItem("respuestas", JSON.stringify(respuestas));
-      localStorage.setItem("preguntas", JSON.stringify(preguntas));
-      window.location.href = "calificación.html";
+    async function verAnalisis() {
+      try {
+        // Guardar también en localStorage para análisis
+        localStorage.setItem("respuestas", JSON.stringify(respuestas));
+        localStorage.setItem("preguntas", JSON.stringify(preguntas));
+
+        // 🔹 Insertar en Supabase
+        const { error } = await supabaseClient.from("encuesta").insert([
+          {
+            materia: materia,
+            docente: docente,
+            temas: temas,
+            fecha: fechaActual,
+            preguntas: preguntas,
+            respuestas: respuestas
+          }
+        ]);
+
+        if (error) {
+          console.error("Error al guardar en Supabase:", error);
+          alert("Ocurrió un error al guardar en la base de datos ❌");
+        } else {
+          console.log("Respuestas guardadas en Supabase ✅");
+          window.location.href = "calificación.html";
+        }
+      } catch (err) {
+        console.error("Error inesperado:", err);
+        alert("Hubo un problema al guardar los datos.");
+      }
     }
 
     // Primera pregunta
