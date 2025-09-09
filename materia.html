@@ -5,35 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Encuesta</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 </head>
-<body class="bg-zinc-900 text-white min-h-screen flex items-center justify-center px-4 font-sans">
+<body class="bg-gradient-to-br from-zinc-900 to-zinc-950 text-white min-h-screen flex flex-col font-sans">
 
-  <main class="bg-zinc-800 p-8 rounded-3xl shadow-xl w-full max-w-xl space-y-6 text-center">
-    <h1 class="text-3xl font-bold">Encuesta de Evaluación</h1>
+  <!-- Header -->
+  <header class="p-4 bg-zinc-800 shadow-md flex justify-between items-center">
+    <h1 class="text-lg md:text-xl font-bold">Encuesta de Evaluación</h1>
+    <p class="text-sm text-gray-400" id="fecha"></p>
+  </header>
 
-    <div>
-      <p class="text-lg font-semibold">Materia: <span id="materia" class="text-blue-400"></span></p>
-      <p class="text-sm text-gray-300" id="fecha"></p>
-    </div>
+  <!-- Main -->
+  <main class="flex-1 flex items-center justify-center px-4">
+    <div class="bg-zinc-800 w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-6">
 
-    <div id="preguntaContenedor" class="space-y-4">
-      <p id="pregunta" class="text-xl font-medium">Pregunta</p>
-
-      <div class="flex flex-col items-start space-y-2">
-        <label><input type="radio" name="respuesta" value="Si" class="mr-2"> Sí</label>
-        <label><input type="radio" name="respuesta" value="No" class="mr-2"> No</label>
-        <label><input type="radio" name="respuesta" value="Más o menos" class="mr-2"> Más o menos</label>
+      <!-- Info -->
+      <div class="text-center">
+        <p class="text-base opacity-80">Materia:</p>
+        <p id="materia" class="text-xl font-bold text-blue-400">-</p>
       </div>
-    </div>
 
-    <div class="space-y-3">
-      <button id="btnSiguiente" onclick="siguientePregunta()" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded w-full font-semibold">
-        Siguiente
-      </button>
+      <!-- Progreso -->
+      <div class="w-full bg-zinc-700 rounded-full h-2">
+        <div id="progressBar" class="bg-blue-500 h-2 rounded-full transition-all duration-500"></div>
+      </div>
 
-      <button id="btnVerAnalisis" onclick="verAnalisis()" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded w-full font-semibold hidden">
-        Ver análisis
-      </button>
+      <!-- Pregunta -->
+      <div id="preguntaContenedor" class="space-y-4">
+        <p id="pregunta" class="text-lg md:text-xl font-semibold text-center">Pregunta</p>
+        <div id="opciones" class="flex flex-col gap-3"></div>
+      </div>
+
+      <!-- Botones -->
+      <div class="space-y-3">
+        <button id="btnSiguiente" onclick="siguientePregunta()" 
+          class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl w-full font-semibold transition-colors">
+          Siguiente
+        </button>
+        <button id="btnVerAnalisis" onclick="verAnalisis()" 
+          class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl w-full font-semibold hidden transition-colors">
+          Puntuar docente
+        </button>
+      </div>
     </div>
   </main>
 
@@ -50,27 +63,49 @@
       "¿Pudiste hacer las actividades?",
       "¿Te sentiste motivado?"
     ];
+    const opciones = ["Sí", "No", "Más o menos"];
 
     let respuestas = [];
     let indice = 0;
 
     function mostrarPregunta() {
       document.getElementById("pregunta").innerText = preguntas[indice];
-      document.querySelectorAll("input[name='respuesta']").forEach(r => r.checked = false);
+
+      // Render opciones como botones
+      const contenedor = document.getElementById("opciones");
+      contenedor.innerHTML = "";
+      opciones.forEach(op => {
+        const btn = document.createElement("button");
+        btn.innerText = op;
+        btn.className = "w-full bg-zinc-700 hover:bg-zinc-600 px-4 py-3 rounded-lg font-medium transition";
+        btn.onclick = () => {
+          document.querySelectorAll("#opciones button").forEach(b => b.classList.remove("ring-2", "ring-blue-400"));
+          btn.classList.add("ring-2", "ring-blue-400");
+          btn.dataset.selected = "true";
+        };
+        contenedor.appendChild(btn);
+      });
+
+      // Progreso
+      const progress = ((indice) / preguntas.length) * 100;
+      document.getElementById("progressBar").style.width = progress + "%";
+
+      gsap.from("#preguntaContenedor", { opacity: 0, y: 30, duration: 0.5 });
     }
 
     function siguientePregunta() {
-      const seleccion = document.querySelector("input[name='respuesta']:checked");
-      if (!seleccion) {
+      const seleccionado = document.querySelector("#opciones button.ring-2");
+      if (!seleccionado) {
         alert("Por favor selecciona una respuesta.");
         return;
       }
 
-      respuestas.push(seleccion.value);
+      respuestas.push(seleccionado.innerText);
       indice++;
 
       if (indice >= preguntas.length) {
-        document.getElementById("preguntaContenedor").innerHTML = "<p class='text-xl font-bold'>¡Gracias por responder!</p>";
+        document.getElementById("preguntaContenedor").innerHTML = "<p class='text-xl font-bold text-center'>¡Gracias por responder!</p>";
+        document.getElementById("progressBar").style.width = "100%";
         document.getElementById("btnSiguiente").classList.add("hidden");
         document.getElementById("btnVerAnalisis").classList.remove("hidden");
       } else {
@@ -79,18 +114,12 @@
     }
 
     function verAnalisis() {
-      const totalSi = respuestas.filter(r => r === "Si").length;
-
-      // Guardamos análisis y respuestas en localStorage
       localStorage.setItem("respuestas", JSON.stringify(respuestas));
-      localStorage.setItem("totalSi", totalSi);
       localStorage.setItem("preguntas", JSON.stringify(preguntas));
-
-      // Redirigimos a form4
-      window.location.href = "analisis.html"; // cambia el nombre si tu archivo es diferente
+      window.location.href = "calificación.html";
     }
 
-    // Mostrar la primera pregunta al cargar
+    // Primera pregunta
     window.onload = mostrarPregunta;
   </script>
 </body>
