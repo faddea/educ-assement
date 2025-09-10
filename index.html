@@ -49,6 +49,31 @@ if ("serviceWorker" in navigator) {
 }
 </script>
 
+
+<!-- Contenedor de instalación -->
+<div id="installPrompt" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-indigo-600 text-white px-6 py-5 rounded-2xl shadow-2xl text-center animate-fadeIn z-50">
+  <p class="text-lg font-semibold">📲 Instalar Encuesta</p>
+  <p class="opacity-90 text-sm mt-1">Accedé más rápido y usala incluso sin internet.</p>
+
+  <div class="flex justify-center gap-4 mt-4">
+    <button id="btnInstalar" class="bg-white text-indigo-600 font-semibold px-6 py-2 rounded-lg shadow hover:bg-gray-200 transition">
+      Instalar
+    </button>
+    <button id="btnCancelar" class="text-white/80 underline">Ahora no</button>
+  </div>
+</div>
+
+<!-- Animación -->
+<style>
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, 20px) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+</style>
+
 <script>
 let deferredPrompt;
 
@@ -56,15 +81,21 @@ window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   deferredPrompt = e;
 
-  const installBtn = document.getElementById("btnInstalar");
-  installBtn.classList.remove("hidden");
+  // Mostrar tarjeta centrada abajo
+  document.getElementById("installPrompt").classList.remove("hidden");
 
-  installBtn.addEventListener("click", async () => {
-    installBtn.classList.add("hidden");
+  // Botón instalar
+  document.getElementById("btnInstalar").addEventListener("click", async () => {
+    document.getElementById("installPrompt").classList.add("hidden");
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     console.log(`Instalación: ${outcome}`);
     deferredPrompt = null;
+  });
+
+  // Botón cancelar
+  document.getElementById("btnCancelar").addEventListener("click", () => {
+    document.getElementById("installPrompt").classList.add("hidden");
   });
 });
 </script>
