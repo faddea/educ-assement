@@ -12,16 +12,18 @@ const urlsToCache = [
 ];
 
 // Instalar y cachear archivos
-self.addEventListener("install", event => {
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME)
+    .then(cache => cache.addAll(urlsToCache))
   );
 });
 
 // Servir desde cache si está disponible
-self.addEventListener("fetch", event => {
+self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(response => response || fetch(event.request))
+    caches.match(event.request)
+    .then(response => response || fetch(event.request))
   );
 });
 
