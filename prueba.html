@@ -109,38 +109,43 @@
   }
 
   // Finalizar formulario → Guardar en Supabase
-  async function finishForm() {
-    const materia = document.getElementById('materias').value;
-    const docente = document.getElementById('docente').value;
-    const tema = document.getElementById('temas').value.trim();
+  // Finalizar formulario → Guardar en Supabase
+async function finishForm() {
+  const materia = document.getElementById('materias').value;
+  const docente = document.getElementById('docente').value;
+  const tema = document.getElementById('temas').value.trim();
 
-    if (!tema) {
-      alert("Por favor, ingresa los temas curriculares para finalizar.");
-      return;
-    }
-
-    // Aquí se eliminó la recopilación de respuestas y puntaje_docente
-    // porque no se usan en el formulario actual.
-
-    try {
-      const { data, error } = await supabaseClient
-        .from("encuesta")
-        .insert([{
-          materia: materia,
-          tema: tema,
-          docente: docente // 🎉 Agregado para guardar el docente
-        }]);
-
-      if (error) throw error;
-      console.log("✅ Datos guardados en Supabase:", data);
-      alert("Encuesta finalizada ✅");
-      window.location.href = "materia.html";
-
-    } catch (err) {
-      console.error(err);
-      alert("❌ Error al guardar en Supabase");
-    }
+  if (!tema) {
+    alert("Por favor, ingresa los temas curriculares para finalizar.");
+    return;
   }
+
+  try {
+    const { data, error } = await supabaseClient
+      .from("encuesta")
+      .insert([{
+        materia: materia,
+        tema: tema,
+        docente: docente
+      }])
+      .select("id"); // 👈 pedimos que devuelva el id
+
+    if (error) throw error;
+
+    const encuestaId = data[0].id;
+    localStorage.setItem("encuestaId", encuestaId); // 👈 guardamos el id
+
+    console.log("✅ Encuesta creada con ID:", encuestaId);
+    alert("Encuesta iniciada ✅");
+
+    // Pasamos a materia.html
+    window.location.href = "materia.html";
+
+  } catch (err) {
+    console.error("❌ Error al guardar en Supabase:", err);
+    alert("❌ Error al guardar en Supabase");
+  }
+}
 
   // Animación inicial
   document.addEventListener("DOMContentLoaded", () => {

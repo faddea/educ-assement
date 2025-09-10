@@ -119,35 +119,29 @@
     }
 
     async function verAnalisis() {
-      try {
-        // Guardar también en localStorage para análisis
-        localStorage.setItem("respuestas", JSON.stringify(respuestas));
-        localStorage.setItem("preguntas", JSON.stringify(preguntas));
+  try {
+    const encuestaId = localStorage.getItem("encuestaId");
 
-        // 🔹 Insertar en Supabase
-        const { error } = await supabaseClient.from("encuesta").insert([
-          {
-            materia: materia,
-            docente: docente,
-            temas: temas,
-            fecha: fechaActual,
-            preguntas: preguntas,
-            respuestas: respuestas
-          }
-        ]);
+    const { error } = await supabaseClient
+      .from("encuesta")
+      .update({
+        respuestas: respuestas, 
+        preguntas: preguntas
+      })
+      .eq("id", encuestaId); // 👈 actualizamos solo esa fila
 
-        if (error) {
-          console.error("Error al guardar en Supabase:", error);
-          alert("Ocurrió un error al guardar en la base de datos ❌");
-        } else {
-          console.log("Respuestas guardadas en Supabase ✅");
-          window.location.href = "calificación.html";
-        }
-      } catch (err) {
-        console.error("Error inesperado:", err);
-        alert("Hubo un problema al guardar los datos.");
-      }
+    if (error) {
+      console.error("Error al guardar respuestas:", error);
+      alert("Ocurrió un error ❌");
+    } else {
+      console.log("Respuestas guardadas ✅");
+      window.location.href = "calificación.html";
     }
+  } catch (err) {
+    console.error("Error inesperado:", err);
+  }
+}
+
 
     // Primera pregunta
     window.onload = mostrarPregunta;

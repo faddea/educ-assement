@@ -60,25 +60,27 @@
   document.addEventListener("DOMContentLoaded", async () => {
     const materia = localStorage.getItem("materiaSeleccionada") || "Sin materia";
 
-    // 🔹 Obtener evaluaciones de esa materia
-    const { data, error } = await supabase
-      .from("encuesta")
-      .select("*")
-      .eq("materia", materia)
-      .order("fecha", { ascending: false });
+    // 🔹 Obtener la evaluación usando el id guardado
+const encuestaId = localStorage.getItem("encuestaId");
 
-    if (error) {
-      console.error("Error cargando datos:", error.message);
-      return;
-    }
+if (!encuestaId) {
+  alert("No se encontró la encuesta en memoria.");
+  return;
+}
 
-    if (!data || data.length === 0) {
-      alert("No hay evaluaciones guardadas para esta materia.");
-      return;
-    }
+const { data, error } = await supabase
+  .from("encuesta")
+  .select("*")
+  .eq("id", encuestaId)
+  .single();
 
-    // 🔹 Tomamos la última evaluación
-    const ultima = data[0];
+if (error) {
+  console.error("Error cargando datos:", error.message);
+  return;
+}
+
+const ultima = data; // ✅ ya tenemos el único registro
+
 
     document.getElementById("materia").innerText = ultima.materia || materia;
     document.getElementById("fecha").innerText = "Fecha: " + new Date(ultima.fecha).toLocaleDateString("es-AR");

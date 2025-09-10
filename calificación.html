@@ -97,20 +97,20 @@
         return;
       }
 
-      // 🔹 Insertar en la tabla encuesta con timestamp
-      const { data, error } = await supabase
-        .from('encuesta')
-        .insert([{
-          materia: materia,
-          puntaje: puntajeSeleccionado,
-          fecha: new Date().toISOString() // fecha y hora actual
-        }]);
+      // 🔹 Actualizar el registro existente con el puntaje
+const encuestaId = localStorage.getItem("encuestaId");
 
-      if (error) {
-        console.error("Error al guardar en Supabase:", error.message);
-        alert("Hubo un error al guardar. Revisa la consola.");
-        return;
-      }
+const { error } = await supabase
+  .from("encuesta")
+  .update({ puntaje_docente: puntajeSeleccionado }) // 👈 usa la columna correcta de tu tabla
+  .eq("id", encuestaId);
+
+if (error) {
+  console.error("Error al guardar puntaje:", error.message);
+  alert("Hubo un error al guardar. Revisa la consola.");
+  return;
+}
+
 
       alert('Puntaje enviado correctamente ✅');
 

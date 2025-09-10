@@ -41,5 +41,39 @@
     });
   </script>
 
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js")
+    .then(() => console.log("✅ Service Worker registrado"))
+    .catch(err => console.error("❌ Error registrando SW:", err));
+}
+</script>
+
+<script>
+let deferredPrompt;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+
+  const installBtn = document.getElementById("btnInstalar");
+  installBtn.classList.remove("hidden");
+
+  installBtn.addEventListener("click", async () => {
+    installBtn.classList.add("hidden");
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`Instalación: ${outcome}`);
+    deferredPrompt = null;
+  });
+});
+</script>
+
+<!-- Botón de instalar (oculto hasta que sea posible instalar) -->
+<button id="btnInstalar" class="hidden bg-blue-600 px-4 py-2 rounded-lg">
+  📲 Instalar App
+</button>
+
+
 </body>
 </html>
